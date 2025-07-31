@@ -214,7 +214,8 @@ function getColorByLevel(level: number): string {
   return colors[level % colors.length];
 }
 
-function findShortestPath(): void {
+// Função para contar e listar todas as combinações possíveis
+function countAndListCombinations(): void {
   const allNodes = nodes.get() as TreeNode[];
   const leafNodes = allNodes.filter((node) => {
     const hasChildren = edges.get().some((edge) => edge.from === node.id);
@@ -226,28 +227,87 @@ function findShortestPath(): void {
     return;
   }
 
-  let shortestPath: TreeNode[] = [];
+  const allPaths: TreeNode[][] = [];
+
+  leafNodes.forEach((leaf) => {
+    const path = getPathToRoot(leaf, allNodes);
+    allPaths.push(path);
+  });
+
+  // Criar descrição das combinações
+  const combinationsText = allPaths
+    .map((path, index) => {
+      const pathDescription = path
+        .reverse()
+        .slice(1) // Remove o nó "Início"
+        .map((node) => `${node.category}: ${node.name}`)
+        .join(" + ");
+      return `${index + 1}. ${pathDescription}`;
+    })
+    .join("\n");
+
+  // Destacar todas as combinações
+  highlightAllPaths(allPaths);
+
+  alert(
+    `Total de combinações possíveis: ${allPaths.length}\n\nTodas as combinações:\n${combinationsText}`
+  );
+}
+
+// Função para análise de complexidade (simples vs complexo)
+function analyzeComplexity(): void {
+  const allNodes = nodes.get() as TreeNode[];
+  const leafNodes = allNodes.filter((node) => {
+    const hasChildren = edges.get().some((edge) => edge.from === node.id);
+    return !hasChildren && node.category !== "root";
+  });
+
+  if (leafNodes.length === 0) {
+    alert("Não há caminhos completos na árvore!");
+    return;
+  }
+
+  let simplestPath: TreeNode[] = [];
+  let complexPath: TreeNode[] = [];
   let shortestLength = Infinity;
+  let longestLength = 0;
 
   leafNodes.forEach((leaf) => {
     const path = getPathToRoot(leaf, allNodes);
     if (path.length < shortestLength) {
       shortestLength = path.length;
-      shortestPath = path;
+      simplestPath = path;
+    }
+    if (path.length > longestLength) {
+      longestLength = path.length;
+      complexPath = path;
     }
   });
 
-  highlightPath(shortestPath);
+  // Destacar ambos os caminhos
+  highlightComplexityPaths(simplestPath, complexPath);
 
-  const pathDescription = shortestPath
+  const simplestDescription = simplestPath
     .reverse()
+    .slice(1) // Remove o nó "Início"
     .map((node) => `${node.category}: ${node.name}`)
-    .join(" → ");
+    .join(" + ");
+
+  const complexDescription = complexPath
+    .reverse()
+    .slice(1) // Remove o nó "Início"
+    .map((node) => `${node.category}: ${node.name}`)
+    .join(" + ");
 
   alert(
-    `Menor caminho encontrado (${
-      shortestLength - 1
-    } escolhas):\n${pathDescription}`
+    `ANÁLISE DE COMPLEXIDADE:\n\n` +
+      `🟢 LOOK MAIS SIMPLES (${
+        shortestLength - 1
+      } escolhas):\n${simplestDescription}\n\n` +
+      `🔴 LOOK MAIS COMPLEXO (${
+        longestLength - 1
+      } escolhas):\n${complexDescription}\n\n` +
+      `Diferença: ${longestLength - shortestLength} escolhas adicionais`
   );
 }
 
@@ -268,7 +328,67 @@ function getPathToRoot(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
   return path;
 }
 
-function highlightPath(path: TreeNode[]): void {
+// Função para destacar todas as combinações
+function highlightAllPaths(paths: TreeNode[][]): void {
+  resetHighlight();
+
+  const colors = ["#ff6b6b", "#34d399", "#fbbf24", "#a78bfa", "#fb7185"];
+
+  paths.forEach((path, index) => {
+    const color = colors[index % colors.length];
+
+    // Destacar nós do caminho
+    path.forEach((node) => {
+      nodes.update({
+        id: node.id,
+        color: {
+          background: color,
+          border: "#1f2937",
+        },
+      });
+    });
+
+    // Destacar arestas do caminho
+    highlightEdgesForPath(path, color);
+  });
+}
+
+// Função para destacar caminhos de complexidade (simples vs complexo)
+function highlightComplexityPaths(
+  simplestPath: TreeNode[],
+  complexPath: TreeNode[]
+): void {
+  resetHighlight();
+
+  // Destacar caminho mais simples em verde
+  simplestPath.forEach((node) => {
+    nodes.update({
+      id: node.id,
+      color: {
+        background: "#10b981",
+        border: "#065f46",
+      },
+    });
+  });
+
+  // Destacar caminho mais complexo em vermelho
+  complexPath.forEach((node) => {
+    nodes.update({
+      id: node.id,
+      color: {
+        background: "#ef4444",
+        border: "#991b1b",
+      },
+    });
+  });
+
+  // Destacar arestas
+  highlightEdgesForPath(simplestPath, "#10b981");
+  highlightEdgesForPath(complexPath, "#ef4444");
+}
+
+// Função auxiliar para resetar o highlight
+function resetHighlight(): void {
   const allNodes = nodes.get() as TreeNode[];
   allNodes.forEach((node) => {
     nodes.update({
@@ -276,16 +396,6 @@ function highlightPath(path: TreeNode[]): void {
       color: {
         background: getColorByLevel(node.level || 0),
         border: "#1f2937",
-      },
-    });
-  });
-
-  path.forEach((node) => {
-    nodes.update({
-      id: node.id,
-      color: {
-        background: "#ff6b6b",
-        border: "#dc2626",
       },
     });
   });
@@ -300,6 +410,14 @@ function highlightPath(path: TreeNode[]): void {
       },
     });
   });
+}
+
+// Função auxiliar para destacar arestas de um caminho
+function highlightEdgesForPath(
+  path: TreeNode[],
+  color: string = "#ff6b6b"
+): void {
+  const allEdges = edges.get();
 
   for (let i = 0; i < path.length - 1; i++) {
     const fromNode = path[i + 1]; // Pai
@@ -312,8 +430,8 @@ function highlightPath(path: TreeNode[]): void {
       edges.update({
         id: edge.id,
         color: {
-          color: "#ff6b6b",
-          highlight: "#dc2626",
+          color: color,
+          highlight: color,
         },
       });
     }
@@ -407,10 +525,13 @@ function addExampleNode(
   addItem
 );
 
-(document.getElementById("search-btn") as HTMLButtonElement).addEventListener(
-  "click",
-  findShortestPath
-);
+(
+  document.getElementById("count-combinations-btn") as HTMLButtonElement
+).addEventListener("click", countAndListCombinations);
+
+(
+  document.getElementById("analyze-complexity-btn") as HTMLButtonElement
+).addEventListener("click", analyzeComplexity);
 
 (document.getElementById("reset-btn") as HTMLButtonElement).addEventListener(
   "click",
