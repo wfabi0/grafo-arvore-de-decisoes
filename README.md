@@ -14,17 +14,17 @@ Uma aplicação de grafos/árvore para Matemática Discreta que permite criar á
 - Cada nó tem ID único, categoria e nome
 - Possibilidade de adicionar filhos a qualquer nó existente
 
-### 2. **Busca em Profundidade**
+### 2. **Visualização Interativa**
 
-- Encontra o menor caminho (menor número de decisões)
-- Destaca visualmente o caminho encontrado
-- Útil para encontrar a combinação mais simples
+- Layout de árvore que cresce para baixo
+- Cores diferentes por nível para melhor organização
+- Clique em um nó para selecioná-lo como pai para novos itens
 
 ### 3. **Interface Intuitiva**
 
-- Layout de árvore que cresce para baixo
-- Cores diferentes por nível
-- Clique em um nó para selecioná-lo como pai
+- Navegação simples e responsiva
+- Formulário claro para adicionar novos nós
+- Visualização em tempo real das mudanças na árvore
 
 ## Como Usar
 
@@ -53,10 +53,6 @@ Uma aplicação de grafos/árvore para Matemática Discreta que permite criar á
    - Sapatos (Tênis, Social)
    - etc.
 
-### Buscar Menor Caminho
-
-Clique em "Buscar Menor Caminho" para encontrar a combinação com menos escolhas.
-
 ## Tecnologias
 
 - TypeScript
@@ -68,4 +64,16 @@ Clique em "Buscar Menor Caminho" para encontrar a combinação com menos escolha
 ```bash
 npm install
 npm run dev
+```
+
+## Deploy
+
+Este projeto está configurado para deploy no GitHub Pages.
+
+**URL de produção:** `https://wfabi0.github.io/grafo-arvore-de-decisoes/`
+
+Para deploy manual:
+
+```bash
+npm run deploy
 ```
