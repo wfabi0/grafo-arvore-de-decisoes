@@ -86,6 +86,56 @@ const options: Options = {
 
 const network = new Network(container, data, options);
 
+// Funções do Modal
+function showModal(title: string, message: string): void {
+  const modal = document.getElementById("custom-modal") as HTMLDivElement;
+  const modalTitle = document.getElementById(
+    "modal-title"
+  ) as HTMLHeadingElement;
+  const modalText = document.getElementById(
+    "modal-text"
+  ) as HTMLParagraphElement;
+
+  modalTitle.textContent = title;
+  modalText.textContent = message;
+  modal.style.display = "block";
+
+  // Focar no modal para acessibilidade
+  modal.focus();
+}
+
+function hideModal(): void {
+  const modal = document.getElementById("custom-modal") as HTMLDivElement;
+  modal.style.display = "none";
+}
+
+// Event listeners do modal
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("custom-modal") as HTMLDivElement;
+  const closeBtn = document.querySelector(".modal-close") as HTMLSpanElement;
+  const okBtn = document.getElementById("modal-ok-btn") as HTMLButtonElement;
+
+  // Fechar modal ao clicar no X
+  closeBtn.addEventListener("click", hideModal);
+
+  // Fechar modal ao clicar no botão OK
+  okBtn.addEventListener("click", hideModal);
+
+  // Fechar modal ao clicar fora dele
+  modal.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      hideModal();
+    }
+  });
+
+  // Fechar modal com a tecla ESC
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && modal.style.display === "block") {
+      hideModal();
+    }
+  });
+});
+
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
     const nodeId = params.nodes[0];
@@ -133,7 +183,7 @@ function addItem(): void {
   const name = nameInput.value.trim();
 
   if (!category || !name) {
-    alert("Por favor, preencha a categoria e o nome!");
+    showModal("Erro", "Por favor, preencha a categoria e o nome!");
     return;
   }
 
@@ -149,7 +199,7 @@ function addItem(): void {
       ) || null;
 
     if (!parentNode) {
-      alert("Nó pai não encontrado! Use o ID ou nome exato.");
+      showModal("Erro", "Nó pai não encontrado! Use o ID ou nome exato.");
       return;
     }
   } else {
@@ -165,7 +215,7 @@ function addItem(): void {
   }
 
   if (!parentNode) {
-    alert("Erro ao encontrar nó pai!");
+    showModal("Erro", "Erro ao encontrar nó pai!");
     return;
   }
 
@@ -223,7 +273,7 @@ function countAndListCombinations(): void {
   });
 
   if (leafNodes.length === 0) {
-    alert("Não há caminhos completos na árvore!");
+    showModal("Aviso", "Não há caminhos completos na árvore!");
     return;
   }
 
@@ -249,7 +299,8 @@ function countAndListCombinations(): void {
   // Destacar todas as combinações
   highlightAllPaths(allPaths);
 
-  alert(
+  showModal(
+    "Todas as Combinações",
     `Total de combinações possíveis: ${allPaths.length}\n\nTodas as combinações:\n${combinationsText}`
   );
 }
@@ -263,7 +314,7 @@ function analyzeComplexity(): void {
   });
 
   if (leafNodes.length === 0) {
-    alert("Não há caminhos completos na árvore!");
+    showModal("Aviso", "Não há caminhos completos na árvore!");
     return;
   }
 
@@ -299,11 +350,11 @@ function analyzeComplexity(): void {
     .map((node) => `${node.category}: ${node.name}`)
     .join(" + ");
 
-  alert(
-    `ANÁLISE DE COMPLEXIDADE:\n\n` +
-      `🟢 LOOK MAIS SIMPLES (${
-        shortestLength - 1
-      } escolhas):\n${simplestDescription}\n\n` +
+  showModal(
+    "Análise de Complexidade",
+    `🟢 LOOK MAIS SIMPLES (${
+      shortestLength - 1
+    } escolhas):\n${simplestDescription}\n\n` +
       `🔴 LOOK MAIS COMPLEXO (${
         longestLength - 1
       } escolhas):\n${complexDescription}\n\n` +
