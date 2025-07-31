@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/jpeg" href="/grafo-arvore-de-decisoes/icon.jpeg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizador de Grafos (TypeScript)</title>
+  <script type="module" crossorigin src="/grafo-arvore-de-decisoes/assets/index-CXrq-YnR.js"></script>
+  <link rel="stylesheet" crossorigin href="/grafo-arvore-de-decisoes/assets/index-R2-2axrF.css">
+</head>
+
+<body>
+  <div id="app">
+    <h1>Visualizador de Árvore de Decisões</h1>
+    <p>Crie uma árvore de decisões para combinações (ex.: roupas, comidas, etc.)</p>
+
+    <div class="controls">
+      <div class="input-group">
+        <label for="parent-input">Nó Pai (ID ou Nome - deixe vazio para raiz):</label>
+        <input type="text" id="parent-input" placeholder="ex: 1 ou Blusa">
+      </div>
+
+      <div class="input-group">
+        <label for="category-input">Categoria:</label>
+        <input type="text" id="category-input" placeholder="ex: Blusa, Calça, Sapato">
+      </div>
+
+      <div class="input-group">
+        <label for="name-input">Nome do Item:</label>
+        <input type="text" id="name-input" placeholder="ex: Rosa, Jeans, Tênis">
+      </div>
+
+      <div class="button-group">
+        <button id="add-item-btn">Adicionar Item</button>
+        <button id="delete-item-btn">Excluir Item Selecionado</button>
+        <button id="count-combinations-btn">Contar Combinações</button>
+        <button id="analyze-complexity-btn">Analisar Complexidade</button>
+        <button id="center-btn">Centralizar Gráfico</button>
+        <button id="reset-btn">Resetar Árvore</button>
+        <button id="load-examples-btn">Carregar Exemplos</button>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Como usar:</h3>
+      <ol>
+        <li><strong>Visualização Inicial:</strong> A árvore já vem com exemplos de combinações de roupas.</li>
+        <li><strong>Adicionar Item:</strong> Digite a categoria e nome. Deixe "Nó Pai" vazio para adicionar na raiz.
+        </li>
+        <li><strong>Adicionar Sub-item:</strong> Digite o ID ou nome do nó pai, depois categoria e nome do novo item.
+        </li>
+        <li><strong>Excluir Item:</strong> Clique em um nó no grafo para selecioná-lo, depois clique em "Excluir Item
+          Selecionado".</li>
+        <li><strong>Contar Combinações:</strong> Calcula e lista todas as combinações possíveis na árvore.</li>
+        <li><strong>Analisar Complexidade:</strong> Mostra o look mais simples vs. mais complexo (menos vs. mais
+          escolhas).</li>
+        <li><strong>Carregar Exemplos:</strong> Restaura os exemplos padrão de combinações de roupas.</li>
+      </ol>
+      <p><strong>Dica:</strong> Clique em qualquer nó no grafo para selecioná-lo automaticamente como nó pai!</p>
+      <p><strong>Atalho:</strong> Pressione a tecla <kbd>Espaço</kbd> para centralizar o gráfico rapidamente.</p>
+    </div>
+
+    <div id="graph-container"></div>
+
+    <!-- Modal personalizado -->
+    <div id="custom-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-title">Resultado</h3>
+          <span class="modal-close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <p id="modal-text"></p>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-ok-btn" class="modal-btn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
