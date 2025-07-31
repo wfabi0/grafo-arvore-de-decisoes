@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icon.jpeg" alt="Ícone" width="60%" style="margin-bottom: 10px;">
+  <img src="public/icon.jpeg" alt="Ícone" width="20%" style="margin-bottom: 10px;">
   
   <h1>Visualizador de Árvore de Decisões</h1>
 </div>
