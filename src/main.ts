@@ -87,7 +87,6 @@ const options: Options = {
 
 const network = new Network(container, data, options);
 
-// Funções do Modal
 function showModal(title: string, message: string): void {
   const modal = document.getElementById("custom-modal") as HTMLDivElement;
   const modalTitle = document.getElementById(
@@ -101,7 +100,6 @@ function showModal(title: string, message: string): void {
   modalText.textContent = message;
   modal.style.display = "block";
 
-  // Focar no modal para acessibilidade
   modal.focus();
 }
 
@@ -110,26 +108,21 @@ function hideModal(): void {
   modal.style.display = "none";
 }
 
-// Event listeners do modal
 document.addEventListener("DOMContentLoaded", function () {
   const modal = document.getElementById("custom-modal") as HTMLDivElement;
   const closeBtn = document.querySelector(".modal-close") as HTMLSpanElement;
   const okBtn = document.getElementById("modal-ok-btn") as HTMLButtonElement;
 
-  // Fechar modal ao clicar no X
   closeBtn.addEventListener("click", hideModal);
 
-  // Fechar modal ao clicar no botão OK
   okBtn.addEventListener("click", hideModal);
 
-  // Fechar modal ao clicar fora dele
   modal.addEventListener("click", function (event) {
     if (event.target === modal) {
       hideModal();
     }
   });
 
-  // Fechar modal com a tecla ESC
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && modal.style.display === "block") {
       hideModal();
@@ -142,19 +135,16 @@ network.on("click", function (params) {
     const nodeId = params.nodes[0];
     const node = nodes.get(nodeId) as TreeNode;
     if (node) {
-      // Preencher automaticamente o campo "Nó Pai" com o nó clicado
       const parentInput = document.getElementById(
         "parent-input"
       ) as HTMLInputElement;
       parentInput.value = node.id?.toString() || "";
 
-      // Selecionar nó para exclusão
       selectNodeForDeletion(nodeId);
 
       console.log(`Nó selecionado: ${node.name} (ID: ${node.id})`);
     }
   } else {
-    // Deselecionar se clicar em área vazia
     deselectNode();
   }
 });
@@ -273,7 +263,6 @@ function getColorByLevel(level: number): string {
   return colors[level % colors.length];
 }
 
-// Função para contar e listar todas as combinações possíveis
 function countAndListCombinations(): void {
   const allNodes = nodes.get() as TreeNode[];
   const leafNodes = allNodes.filter((node) => {
@@ -293,19 +282,17 @@ function countAndListCombinations(): void {
     allPaths.push(path);
   });
 
-  // Criar descrição das combinações
   const combinationsText = allPaths
     .map((path, index) => {
       const pathDescription = path
         .reverse()
-        .slice(1) // Remove o nó "Início"
+        .slice(1)
         .map((node) => `${node.category}: ${node.name}`)
         .join(" + ");
       return `${index + 1}. ${pathDescription}`;
     })
     .join("\n");
 
-  // Destacar todas as combinações
   highlightAllPaths(allPaths);
 
   showModal(
@@ -314,7 +301,6 @@ function countAndListCombinations(): void {
   );
 }
 
-// Função para análise de complexidade (simples vs complexo)
 function analyzeComplexity(): void {
   const allNodes = nodes.get() as TreeNode[];
   const leafNodes = allNodes.filter((node) => {
@@ -344,18 +330,17 @@ function analyzeComplexity(): void {
     }
   });
 
-  // Destacar ambos os caminhos
   highlightComplexityPaths(simplestPath, complexPath);
 
   const simplestDescription = simplestPath
     .reverse()
-    .slice(1) // Remove o nó "Início"
+    .slice(1)
     .map((node) => `${node.category}: ${node.name}`)
     .join(" + ");
 
   const complexDescription = complexPath
     .reverse()
-    .slice(1) // Remove o nó "Início"
+    .slice(1)
     .map((node) => `${node.category}: ${node.name}`)
     .join(" + ");
 
@@ -388,7 +373,6 @@ function getPathToRoot(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
   return path;
 }
 
-// Função para destacar todas as combinações
 function highlightAllPaths(paths: TreeNode[][]): void {
   resetHighlight();
 
@@ -397,7 +381,6 @@ function highlightAllPaths(paths: TreeNode[][]): void {
   paths.forEach((path, index) => {
     const color = colors[index % colors.length];
 
-    // Destacar nós do caminho
     path.forEach((node) => {
       nodes.update({
         id: node.id,
@@ -408,19 +391,16 @@ function highlightAllPaths(paths: TreeNode[][]): void {
       });
     });
 
-    // Destacar arestas do caminho
     highlightEdgesForPath(path, color);
   });
 }
 
-// Função para destacar caminhos de complexidade (simples vs complexo)
 function highlightComplexityPaths(
   simplestPath: TreeNode[],
   complexPath: TreeNode[]
 ): void {
   resetHighlight();
 
-  // Destacar caminho mais simples em verde
   simplestPath.forEach((node) => {
     nodes.update({
       id: node.id,
@@ -431,7 +411,6 @@ function highlightComplexityPaths(
     });
   });
 
-  // Destacar caminho mais complexo em vermelho
   complexPath.forEach((node) => {
     nodes.update({
       id: node.id,
@@ -442,12 +421,10 @@ function highlightComplexityPaths(
     });
   });
 
-  // Destacar arestas
   highlightEdgesForPath(simplestPath, "#10b981");
   highlightEdgesForPath(complexPath, "#ef4444");
 }
 
-// Função auxiliar para resetar o highlight
 function resetHighlight(): void {
   const allNodes = nodes.get() as TreeNode[];
   allNodes.forEach((node) => {
@@ -472,7 +449,6 @@ function resetHighlight(): void {
   });
 }
 
-// Função auxiliar para destacar arestas de um caminho
 function highlightEdgesForPath(
   path: TreeNode[],
   color: string = "#ff6b6b"
@@ -506,7 +482,6 @@ function resetGraph(): void {
   console.log("Grafo resetado!");
 }
 
-// Função para centralizar o gráfico
 function centerGraph(): void {
   network.fit({
     animation: {
@@ -517,9 +492,7 @@ function centerGraph(): void {
   console.log("Gráfico centralizado!");
 }
 
-// Função para selecionar um nó para exclusão
 function selectNodeForDeletion(nodeId: IdType): void {
-  // Deselecionar nó anterior
   if (selectedNodeId) {
     const prevNode = nodes.get(selectedNodeId) as TreeNode;
     if (prevNode) {
@@ -534,7 +507,6 @@ function selectNodeForDeletion(nodeId: IdType): void {
     }
   }
 
-  // Selecionar novo nó
   selectedNodeId = nodeId;
   const node = nodes.get(nodeId) as TreeNode;
 
@@ -548,7 +520,6 @@ function selectNodeForDeletion(nodeId: IdType): void {
       },
     });
 
-    // Habilitar botão de exclusão
     const deleteBtn = document.getElementById(
       "delete-item-btn"
     ) as HTMLButtonElement;
@@ -557,7 +528,6 @@ function selectNodeForDeletion(nodeId: IdType): void {
   }
 }
 
-// Função para deselecionar nó
 function deselectNode(): void {
   if (selectedNodeId) {
     const node = nodes.get(selectedNodeId) as TreeNode;
@@ -575,7 +545,6 @@ function deselectNode(): void {
 
   selectedNodeId = null;
 
-  // Desabilitar botão de exclusão
   const deleteBtn = document.getElementById(
     "delete-item-btn"
   ) as HTMLButtonElement;
@@ -583,7 +552,6 @@ function deselectNode(): void {
   deleteBtn.textContent = "Excluir Item Selecionado";
 }
 
-// Função para excluir item selecionado
 function deleteSelectedItem(): void {
   if (!selectedNodeId) {
     showModal(
@@ -600,13 +568,11 @@ function deleteSelectedItem(): void {
     return;
   }
 
-  // Não permitir excluir o nó raiz
   if (nodeToDelete.category === "root") {
     showModal("Erro", "Não é possível excluir o nó raiz!");
     return;
   }
 
-  // Verificar se o nó tem filhos
   const hasChildren = edges.get().some((edge) => edge.from === selectedNodeId);
 
   if (hasChildren) {
@@ -615,7 +581,6 @@ function deleteSelectedItem(): void {
       `O item "${nodeToDelete.name}" possui sub-itens. Ao excluí-lo, todos os sub-itens também serão removidos. Deseja continuar?`
     );
 
-    // Adicionar confirmação temporária (será melhorada depois)
     setTimeout(() => {
       if (confirm("Confirma a exclusão?")) {
         performDeletion(selectedNodeId!);
@@ -626,20 +591,17 @@ function deleteSelectedItem(): void {
   }
 }
 
-// Função para realizar a exclusão
 function performDeletion(nodeId: IdType): void {
   const nodeToDelete = nodes.get(nodeId) as TreeNode;
 
   if (!nodeToDelete) return;
 
-  // Coletar todos os nós descendentes
   const nodesToDelete: IdType[] = [];
   const edgesToDelete: IdType[] = [];
 
   function collectDescendants(parentId: IdType): void {
     nodesToDelete.push(parentId);
 
-    // Encontrar todos os filhos
     const childEdges = edges.get({
       filter: (edge) => edge.from === parentId,
     });
@@ -654,7 +616,6 @@ function performDeletion(nodeId: IdType): void {
 
   collectDescendants(nodeId);
 
-  // Remover a aresta que conecta o nó ao seu pai
   const parentEdge = edges.get({
     filter: (edge) => edge.to === nodeId,
   });
@@ -663,11 +624,9 @@ function performDeletion(nodeId: IdType): void {
     edgesToDelete.push(edge.id!);
   });
 
-  // Executar a remoção
   edges.remove(edgesToDelete);
   nodes.remove(nodesToDelete);
 
-  // Deselecionar
   selectedNodeId = null;
   const deleteBtn = document.getElementById(
     "delete-item-btn"
@@ -685,8 +644,6 @@ function performDeletion(nodeId: IdType): void {
     } sub-itens`
   );
 }
-
-// Função para criar exemplos padrão
 
 function createDefaultExamples(): void {
   createRootNode();
@@ -786,9 +743,7 @@ function addExampleNode(
   setTimeout(() => createDefaultExamples(), 100);
 });
 
-// Event listener para tecla Espaço
 document.addEventListener("keydown", function (event) {
-  // Verificar se a tecla pressionada é Espaço e não está em um campo de input/textarea
   if (event.code === "Space") {
     const activeElement = document.activeElement;
     const isInputField =
@@ -798,16 +753,14 @@ document.addEventListener("keydown", function (event) {
         activeElement.getAttribute("contenteditable") === "true");
 
     if (!isInputField) {
-      event.preventDefault(); // Prevenir scroll da página
+      event.preventDefault();
       centerGraph();
     }
   }
 });
 
-// Inicializar com exemplos padrão
 createDefaultExamples();
 
-// Inicializar botão de exclusão como desabilitado
 document.addEventListener("DOMContentLoaded", function () {
   const deleteBtn = document.getElementById(
     "delete-item-btn"
