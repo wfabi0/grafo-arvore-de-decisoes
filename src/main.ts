@@ -7,25 +7,25 @@ import type {
   IdType,
 } from "vis-network/standalone/esm/vis-network.js";
 
-interface TreeNode extends Node {
+interface NoArvore extends Node {
   category?: string;
   name?: string;
   level?: number;
   parentId?: IdType;
 }
 
-const nodes = new DataSet<TreeNode, "id">([]);
-const edges = new DataSet<Edge>([]);
+const nos = new DataSet<NoArvore, "id">([]);
+const arestas = new DataSet<Edge>([]);
 
-let nodeIdCounter: number = 1;
-let maxLevel: number = 0;
-let selectedNodeId: IdType | null = null;
+let contadorIdNo: number = 1;
+let nivelMaximo: number = 0;
+let noSelecionadoId: IdType | null = null;
 
 const container = document.getElementById("graph-container") as HTMLDivElement;
 
-const data = {
-  nodes: nodes,
-  edges: edges,
+const dados = {
+  nodes: nos,
+  edges: arestas,
 };
 
 const options: Options = {
@@ -85,7 +85,7 @@ const options: Options = {
   },
 };
 
-const network = new Network(container, data, options);
+const network = new Network(container, dados, options);
 
 function showModal(title: string, message: string): void {
   const modal = document.getElementById("custom-modal") as HTMLDivElement;
@@ -133,42 +133,44 @@ document.addEventListener("DOMContentLoaded", function () {
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
     const nodeId = params.nodes[0];
-    const node = nodes.get(nodeId) as TreeNode;
+    const node = nos.get(nodeId) as NoArvore;
     if (node) {
       const parentInput = document.getElementById(
         "parent-input"
       ) as HTMLInputElement;
       parentInput.value = node.id?.toString() || "";
 
-      selectNodeForDeletion(nodeId);
+      selecionarNoParaExclusao(nodeId);
 
       console.log(`Nó selecionado: ${node.name} (ID: ${node.id})`);
     }
   } else {
-    deselectNode();
+    desselecionarNo();
   }
 });
 
-function createRootNode(): void {
-  if (nodes.length === 0) {
-    const rootNode: TreeNode = {
-      id: nodeIdCounter++,
-      label: "Início",
-      category: "root",
-      name: "Início",
-      level: 0,
-      color: {
-        background: "#7c3aed",
-        border: "#5b21b6",
-      },
-    };
-    nodes.add(rootNode);
-    maxLevel = 0;
-    console.log("Nó raiz criado!");
-  }
+function criarNoRaiz() {
+  nos.clear();
+  arestas.clear();
+
+  contadorIdNo = 1;
+  nivelMaximo = 0;
+  noSelecionadoId = null;
+
+  const rootNode: NoArvore = {
+    id: contadorIdNo++,
+    label: "Escolhas de Roupa",
+    level: 0,
+    color: getColorByLevel(0),
+  };
+
+  nivelMaximo = 0;
+  nos.add(rootNode);
+
+  showModal("Sucesso", "Nó raiz criado com sucesso!");
 }
 
-function addItem(): void {
+function adicionarItem(): void {
   const parentInput = document.getElementById(
     "parent-input"
   ) as HTMLInputElement;
@@ -186,10 +188,10 @@ function addItem(): void {
     return;
   }
 
-  let parentNode: TreeNode | null = null;
+  let parentNode: NoArvore | null = null;
 
   if (parentIdentifier) {
-    const allNodes = nodes.get() as TreeNode[];
+    const allNodes = nos.get() as NoArvore[];
     parentNode =
       allNodes.find(
         (node) =>
@@ -202,12 +204,12 @@ function addItem(): void {
       return;
     }
   } else {
-    const allNodes = nodes.get() as TreeNode[];
+    const allNodes = nos.get() as NoArvore[];
     parentNode = allNodes.find((node) => node.category === "root") || null;
 
     if (!parentNode) {
-      createRootNode();
-      const allNodesUpdated = nodes.get() as TreeNode[];
+      criarNoRaiz();
+      const allNodesUpdated = nos.get() as NoArvore[];
       parentNode =
         allNodesUpdated.find((node) => node.category === "root") || null;
     }
@@ -219,10 +221,10 @@ function addItem(): void {
   }
 
   const newLevel = (parentNode.level || 0) + 1;
-  maxLevel = Math.max(maxLevel, newLevel);
+  nivelMaximo = Math.max(nivelMaximo, newLevel);
 
-  const newNode: TreeNode = {
-    id: nodeIdCounter++,
+  const newNode: NoArvore = {
+    id: contadorIdNo++,
     label: `${category}\n${name}`,
     category: category,
     name: name,
@@ -234,13 +236,13 @@ function addItem(): void {
     },
   };
 
-  nodes.add(newNode);
+  nos.add(newNode);
 
   const newEdge: Edge = {
     from: parentNode.id,
     to: newNode.id,
   };
-  edges.add(newEdge);
+  arestas.add(newEdge);
 
   console.log(
     `Item "${name}" (${category}) adicionado como filho de "${parentNode.name}"`
@@ -263,10 +265,10 @@ function getColorByLevel(level: number): string {
   return colors[level % colors.length];
 }
 
-function countAndListCombinations(): void {
-  const allNodes = nodes.get() as TreeNode[];
+function contarEListarCombinacoes(): void {
+  const allNodes = nos.get() as NoArvore[];
   const leafNodes = allNodes.filter((node) => {
-    const hasChildren = edges.get().some((edge) => edge.from === node.id);
+    const hasChildren = arestas.get().some((edge) => edge.from === node.id);
     return !hasChildren && node.category !== "root";
   });
 
@@ -275,10 +277,10 @@ function countAndListCombinations(): void {
     return;
   }
 
-  const allPaths: TreeNode[][] = [];
+  const allPaths: NoArvore[][] = [];
 
   leafNodes.forEach((leaf) => {
-    const path = getPathToRoot(leaf, allNodes);
+    const path = obterCaminhoParaRaiz(leaf, allNodes);
     allPaths.push(path);
   });
 
@@ -293,7 +295,7 @@ function countAndListCombinations(): void {
     })
     .join("\n");
 
-  highlightAllPaths(allPaths);
+  destacarTodosCaminhos(allPaths);
 
   showModal(
     "Todas as Combinações",
@@ -301,10 +303,10 @@ function countAndListCombinations(): void {
   );
 }
 
-function analyzeComplexity(): void {
-  const allNodes = nodes.get() as TreeNode[];
+function analisarComplexidade(): void {
+  const allNodes = nos.get() as NoArvore[];
   const leafNodes = allNodes.filter((node) => {
-    const hasChildren = edges.get().some((edge) => edge.from === node.id);
+    const hasChildren = arestas.get().some((edge) => edge.from === node.id);
     return !hasChildren && node.category !== "root";
   });
 
@@ -313,13 +315,13 @@ function analyzeComplexity(): void {
     return;
   }
 
-  let simplestPath: TreeNode[] = [];
-  let complexPath: TreeNode[] = [];
+  let simplestPath: NoArvore[] = [];
+  let complexPath: NoArvore[] = [];
   let shortestLength = Infinity;
   let longestLength = 0;
 
   leafNodes.forEach((leaf) => {
-    const path = getPathToRoot(leaf, allNodes);
+    const path = obterCaminhoParaRaiz(leaf, allNodes);
     if (path.length < shortestLength) {
       shortestLength = path.length;
       simplestPath = path;
@@ -330,7 +332,7 @@ function analyzeComplexity(): void {
     }
   });
 
-  highlightComplexityPaths(simplestPath, complexPath);
+  destacarCaminhosComplexidade(simplestPath, complexPath);
 
   const simplestDescription = simplestPath
     .reverse()
@@ -356,8 +358,11 @@ function analyzeComplexity(): void {
   );
 }
 
-function getPathToRoot(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
-  const path: TreeNode[] = [node];
+function obterCaminhoParaRaiz(
+  node: NoArvore,
+  allNodes: NoArvore[]
+): NoArvore[] {
+  const path: NoArvore[] = [node];
   let currentNode = node;
 
   while (currentNode.parentId) {
@@ -373,8 +378,8 @@ function getPathToRoot(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
   return path;
 }
 
-function highlightAllPaths(paths: TreeNode[][]): void {
-  resetHighlight();
+function destacarTodosCaminhos(paths: NoArvore[][]): void {
+  redefinirDestaque();
 
   const colors = ["#ff6b6b", "#34d399", "#fbbf24", "#a78bfa", "#fb7185"];
 
@@ -382,7 +387,7 @@ function highlightAllPaths(paths: TreeNode[][]): void {
     const color = colors[index % colors.length];
 
     path.forEach((node) => {
-      nodes.update({
+      nos.update({
         id: node.id,
         color: {
           background: color,
@@ -391,18 +396,18 @@ function highlightAllPaths(paths: TreeNode[][]): void {
       });
     });
 
-    highlightEdgesForPath(path, color);
+    destacarArestasParaCaminho(path, color);
   });
 }
 
-function highlightComplexityPaths(
-  simplestPath: TreeNode[],
-  complexPath: TreeNode[]
+function destacarCaminhosComplexidade(
+  simplestPath: NoArvore[],
+  complexPath: NoArvore[]
 ): void {
-  resetHighlight();
+  redefinirDestaque();
 
   simplestPath.forEach((node) => {
-    nodes.update({
+    nos.update({
       id: node.id,
       color: {
         background: "#10b981",
@@ -412,7 +417,7 @@ function highlightComplexityPaths(
   });
 
   complexPath.forEach((node) => {
-    nodes.update({
+    nos.update({
       id: node.id,
       color: {
         background: "#ef4444",
@@ -421,14 +426,14 @@ function highlightComplexityPaths(
     });
   });
 
-  highlightEdgesForPath(simplestPath, "#10b981");
-  highlightEdgesForPath(complexPath, "#ef4444");
+  destacarArestasParaCaminho(simplestPath, "#10b981");
+  destacarArestasParaCaminho(complexPath, "#ef4444");
 }
 
-function resetHighlight(): void {
-  const allNodes = nodes.get() as TreeNode[];
+function redefinirDestaque(): void {
+  const allNodes = nos.get() as NoArvore[];
   allNodes.forEach((node) => {
-    nodes.update({
+    nos.update({
       id: node.id,
       color: {
         background: getColorByLevel(node.level || 0),
@@ -437,9 +442,9 @@ function resetHighlight(): void {
     });
   });
 
-  const allEdges = edges.get();
+  const allEdges = arestas.get();
   allEdges.forEach((edge) => {
-    edges.update({
+    arestas.update({
       id: edge.id,
       color: {
         color: "#848484",
@@ -449,11 +454,11 @@ function resetHighlight(): void {
   });
 }
 
-function highlightEdgesForPath(
-  path: TreeNode[],
+function destacarArestasParaCaminho(
+  path: NoArvore[],
   color: string = "#ff6b6b"
 ): void {
-  const allEdges = edges.get();
+  const allEdges = arestas.get();
 
   for (let i = 0; i < path.length - 1; i++) {
     const fromNode = path[i + 1]; // Pai
@@ -463,7 +468,7 @@ function highlightEdgesForPath(
       (e) => e.from === fromNode.id && e.to === toNode.id
     );
     if (edge) {
-      edges.update({
+      arestas.update({
         id: edge.id,
         color: {
           color: color,
@@ -474,15 +479,15 @@ function highlightEdgesForPath(
   }
 }
 
-function resetGraph(): void {
-  nodes.clear();
-  edges.clear();
-  nodeIdCounter = 1;
-  maxLevel = 0;
+function redefinirGrafo(): void {
+  nos.clear();
+  arestas.clear();
+  contadorIdNo = 1;
+  nivelMaximo = 0;
   console.log("Grafo resetado!");
 }
 
-function centerGraph(): void {
+function centralizarGrafo(): void {
   network.fit({
     animation: {
       duration: 800,
@@ -492,12 +497,12 @@ function centerGraph(): void {
   console.log("Gráfico centralizado!");
 }
 
-function selectNodeForDeletion(nodeId: IdType): void {
-  if (selectedNodeId) {
-    const prevNode = nodes.get(selectedNodeId) as TreeNode;
+function selecionarNoParaExclusao(nodeId: IdType): void {
+  if (noSelecionadoId) {
+    const prevNode = nos.get(noSelecionadoId) as NoArvore;
     if (prevNode) {
-      nodes.update({
-        id: selectedNodeId,
+      nos.update({
+        id: noSelecionadoId,
         borderWidth: 3,
         color: {
           background: getColorByLevel(prevNode.level || 0),
@@ -507,11 +512,11 @@ function selectNodeForDeletion(nodeId: IdType): void {
     }
   }
 
-  selectedNodeId = nodeId;
-  const node = nodes.get(nodeId) as TreeNode;
+  noSelecionadoId = nodeId;
+  const node = nos.get(nodeId) as NoArvore;
 
   if (node) {
-    nodes.update({
+    nos.update({
       id: nodeId,
       borderWidth: 6,
       color: {
@@ -528,12 +533,12 @@ function selectNodeForDeletion(nodeId: IdType): void {
   }
 }
 
-function deselectNode(): void {
-  if (selectedNodeId) {
-    const node = nodes.get(selectedNodeId) as TreeNode;
+function desselecionarNo(): void {
+  if (noSelecionadoId) {
+    const node = nos.get(noSelecionadoId) as NoArvore;
     if (node) {
-      nodes.update({
-        id: selectedNodeId,
+      nos.update({
+        id: noSelecionadoId,
         borderWidth: 3,
         color: {
           background: getColorByLevel(node.level || 0),
@@ -543,7 +548,7 @@ function deselectNode(): void {
     }
   }
 
-  selectedNodeId = null;
+  noSelecionadoId = null;
 
   const deleteBtn = document.getElementById(
     "delete-item-btn"
@@ -552,8 +557,8 @@ function deselectNode(): void {
   deleteBtn.textContent = "Excluir Item Selecionado";
 }
 
-function deleteSelectedItem(): void {
-  if (!selectedNodeId) {
+function excluirItemSelecionado(): void {
+  if (!noSelecionadoId) {
     showModal(
       "Aviso",
       "Nenhum item selecionado! Clique em um nó da árvore primeiro."
@@ -561,7 +566,7 @@ function deleteSelectedItem(): void {
     return;
   }
 
-  const nodeToDelete = nodes.get(selectedNodeId) as TreeNode;
+  const nodeToDelete = nos.get(noSelecionadoId) as NoArvore;
 
   if (!nodeToDelete) {
     showModal("Erro", "Nó não encontrado!");
@@ -573,7 +578,9 @@ function deleteSelectedItem(): void {
     return;
   }
 
-  const hasChildren = edges.get().some((edge) => edge.from === selectedNodeId);
+  const hasChildren = arestas
+    .get()
+    .some((edge) => edge.from === noSelecionadoId);
 
   if (hasChildren) {
     showModal(
@@ -583,16 +590,16 @@ function deleteSelectedItem(): void {
 
     setTimeout(() => {
       if (confirm("Confirma a exclusão?")) {
-        performDeletion(selectedNodeId!);
+        executarExclusao(noSelecionadoId!);
       }
     }, 500);
   } else {
-    performDeletion(selectedNodeId);
+    executarExclusao(noSelecionadoId);
   }
 }
 
-function performDeletion(nodeId: IdType): void {
-  const nodeToDelete = nodes.get(nodeId) as TreeNode;
+function executarExclusao(nodeId: IdType): void {
+  const nodeToDelete = nos.get(nodeId) as NoArvore;
 
   if (!nodeToDelete) return;
 
@@ -602,7 +609,7 @@ function performDeletion(nodeId: IdType): void {
   function collectDescendants(parentId: IdType): void {
     nodesToDelete.push(parentId);
 
-    const childEdges = edges.get({
+    const childEdges = arestas.get({
       filter: (edge) => edge.from === parentId,
     });
 
@@ -616,7 +623,7 @@ function performDeletion(nodeId: IdType): void {
 
   collectDescendants(nodeId);
 
-  const parentEdge = edges.get({
+  const parentEdge = arestas.get({
     filter: (edge) => edge.to === nodeId,
   });
 
@@ -624,10 +631,10 @@ function performDeletion(nodeId: IdType): void {
     edgesToDelete.push(edge.id!);
   });
 
-  edges.remove(edgesToDelete);
-  nodes.remove(nodesToDelete);
+  arestas.remove(edgesToDelete);
+  nos.remove(nodesToDelete);
 
-  selectedNodeId = null;
+  noSelecionadoId = null;
   const deleteBtn = document.getElementById(
     "delete-item-btn"
   ) as HTMLButtonElement;
@@ -646,34 +653,34 @@ function performDeletion(nodeId: IdType): void {
 }
 
 function createDefaultExamples(): void {
-  createRootNode();
+  criarNoRaiz();
 
   setTimeout(() => {
-    addExampleNode("1", "Blusa", "Opções de Blusa");
-    addExampleNode("1", "Calça", "Opções de Calça");
-    addExampleNode("1", "Sapato", "Opções de Sapato");
+    adicionarNoExemplo("1", "Blusa", "Opções de Blusa");
+    adicionarNoExemplo("1", "Calça", "Opções de Calça");
+    adicionarNoExemplo("1", "Sapato", "Opções de Sapato");
 
     setTimeout(() => {
-      addExampleNode("2", "Blusa", "Rosa");
-      addExampleNode("2", "Blusa", "Amarela");
-      addExampleNode("2", "Blusa", "Azul");
+      adicionarNoExemplo("2", "Blusa", "Rosa");
+      adicionarNoExemplo("2", "Blusa", "Amarela");
+      adicionarNoExemplo("2", "Blusa", "Azul");
 
-      addExampleNode("3", "Calça", "Jeans");
-      addExampleNode("3", "Calça", "Social");
+      adicionarNoExemplo("3", "Calça", "Jeans");
+      adicionarNoExemplo("3", "Calça", "Social");
 
-      addExampleNode("4", "Sapato", "Tênis");
-      addExampleNode("4", "Sapato", "Social");
-      addExampleNode("4", "Sapato", "Bota");
+      adicionarNoExemplo("4", "Sapato", "Tênis");
+      adicionarNoExemplo("4", "Sapato", "Social");
+      adicionarNoExemplo("4", "Sapato", "Bota");
     }, 100);
   }, 50);
 }
 
-function addExampleNode(
+function adicionarNoExemplo(
   parentId: string,
   category: string,
   name: string
 ): void {
-  const allNodes = nodes.get() as TreeNode[];
+  const allNodes = nos.get() as NoArvore[];
   const parentNode = allNodes.find((node) => node.id?.toString() === parentId);
 
   if (!parentNode) {
@@ -682,10 +689,10 @@ function addExampleNode(
   }
 
   const newLevel = (parentNode.level || 0) + 1;
-  maxLevel = Math.max(maxLevel, newLevel);
+  nivelMaximo = Math.max(nivelMaximo, newLevel);
 
-  const newNode: TreeNode = {
-    id: nodeIdCounter++,
+  const newNode: NoArvore = {
+    id: contadorIdNo++,
     label: `${category}\n${name}`,
     category: category,
     name: name,
@@ -697,49 +704,48 @@ function addExampleNode(
     },
   };
 
-  nodes.add(newNode);
+  nos.add(newNode);
 
   const newEdge: Edge = {
     from: parentNode.id,
     to: newNode.id,
   };
-  edges.add(newEdge);
+  arestas.add(newEdge);
 
   console.log(`Exemplo adicionado: ${category} - ${name} (Nível ${newLevel})`);
 }
 
-// Event listeners
 (document.getElementById("add-item-btn") as HTMLButtonElement).addEventListener(
   "click",
-  addItem
+  adicionarItem
 );
 
 (
   document.getElementById("delete-item-btn") as HTMLButtonElement
-).addEventListener("click", deleteSelectedItem);
+).addEventListener("click", excluirItemSelecionado);
 
 (
   document.getElementById("count-combinations-btn") as HTMLButtonElement
-).addEventListener("click", countAndListCombinations);
+).addEventListener("click", contarEListarCombinacoes);
 
 (
   document.getElementById("analyze-complexity-btn") as HTMLButtonElement
-).addEventListener("click", analyzeComplexity);
+).addEventListener("click", analisarComplexidade);
 
 (document.getElementById("reset-btn") as HTMLButtonElement).addEventListener(
   "click",
-  resetGraph
+  redefinirGrafo
 );
 
 (document.getElementById("center-btn") as HTMLButtonElement).addEventListener(
   "click",
-  centerGraph
+  centralizarGrafo
 );
 
 (
   document.getElementById("load-examples-btn") as HTMLButtonElement
 ).addEventListener("click", function () {
-  resetGraph();
+  redefinirGrafo();
   setTimeout(() => createDefaultExamples(), 100);
 });
 
@@ -754,7 +760,7 @@ document.addEventListener("keydown", function (event) {
 
     if (!isInputField) {
       event.preventDefault();
-      centerGraph();
+      centralizarGrafo();
     }
   }
 });
