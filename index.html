@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizador de Grafos (TypeScript)</title>
+</head>
+
+<body>
+  <div id="app">
+    <h1>Visualizador de Árvore de Decisões</h1>
+    <p>Crie uma árvore de decisões para combinações (ex.: roupas, comidas, etc.)</p>
+
+    <div class="controls">
+      <div class="input-group">
+        <label for="parent-input">Nó Pai (ID ou Nome - deixe vazio para raiz):</label>
+        <input type="text" id="parent-input" placeholder="ex: 1 ou Blusa">
+      </div>
+
+      <div class="input-group">
+        <label for="category-input">Categoria:</label>
+        <input type="text" id="category-input" placeholder="ex: Blusa, Calça, Sapato">
+      </div>
+
+      <div class="input-group">
+        <label for="name-input">Nome do Item:</label>
+        <input type="text" id="name-input" placeholder="ex: Rosa, Jeans, Tênis">
+      </div>
+
+      <div class="button-group">
+        <button id="add-item-btn">Adicionar Item</button>
+        <button id="search-btn">Buscar Menor Caminho</button>
+        <button id="center-btn">Centralizar Gráfico</button>
+        <button id="reset-btn">Resetar Árvore</button>
+        <button id="load-examples-btn">Carregar Exemplos</button>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Como usar:</h3>
+      <ol>
+        <li><strong>Visualização Inicial:</strong> A árvore já vem com exemplos de combinações de roupas.</li>
+        <li><strong>Adicionar Item:</strong> Digite a categoria e nome. Deixe "Nó Pai" vazio para adicionar na raiz.
+        </li>
+        <li><strong>Adicionar Sub-item:</strong> Digite o ID ou nome do nó pai, depois categoria e nome do novo item.
+        </li>
+        <li><strong>Buscar Menor Caminho:</strong> Encontra a combinação com menos escolhas (busca em profundidade).
+        </li>
+        <li><strong>Carregar Exemplos:</strong> Restaura os exemplos padrão de combinações de roupas.</li>
+      </ol>
+      <p><strong>Dica:</strong> Clique em qualquer nó no grafo para selecioná-lo automaticamente como nó pai!</p>
+      <p><strong>Atalho:</strong> Pressione a tecla <kbd>Espaço</kbd> para centralizar o gráfico rapidamente.</p>
+    </div>
+
+    <div id="graph-container"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
