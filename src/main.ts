@@ -19,6 +19,7 @@ const edges = new DataSet<Edge>([]);
 
 let nodeIdCounter: number = 1;
 let maxLevel: number = 0;
+let selectedNodeId: IdType | null = null;
 
 const container = document.getElementById("graph-container") as HTMLDivElement;
 
@@ -141,12 +142,20 @@ network.on("click", function (params) {
     const nodeId = params.nodes[0];
     const node = nodes.get(nodeId) as TreeNode;
     if (node) {
+      // Preencher automaticamente o campo "Nó Pai" com o nó clicado
       const parentInput = document.getElementById(
         "parent-input"
       ) as HTMLInputElement;
       parentInput.value = node.id?.toString() || "";
+
+      // Selecionar nó para exclusão
+      selectNodeForDeletion(nodeId);
+
       console.log(`Nó selecionado: ${node.name} (ID: ${node.id})`);
     }
+  } else {
+    // Deselecionar se clicar em área vazia
+    deselectNode();
   }
 });
 
@@ -497,6 +506,7 @@ function resetGraph(): void {
   console.log("Grafo resetado!");
 }
 
+// Função para centralizar o gráfico
 function centerGraph(): void {
   network.fit({
     animation: {
@@ -506,6 +516,177 @@ function centerGraph(): void {
   });
   console.log("Gráfico centralizado!");
 }
+
+// Função para selecionar um nó para exclusão
+function selectNodeForDeletion(nodeId: IdType): void {
+  // Deselecionar nó anterior
+  if (selectedNodeId) {
+    const prevNode = nodes.get(selectedNodeId) as TreeNode;
+    if (prevNode) {
+      nodes.update({
+        id: selectedNodeId,
+        borderWidth: 3,
+        color: {
+          background: getColorByLevel(prevNode.level || 0),
+          border: "#1f2937",
+        },
+      });
+    }
+  }
+
+  // Selecionar novo nó
+  selectedNodeId = nodeId;
+  const node = nodes.get(nodeId) as TreeNode;
+
+  if (node) {
+    nodes.update({
+      id: nodeId,
+      borderWidth: 6,
+      color: {
+        background: getColorByLevel(node.level || 0),
+        border: "#ff6b6b",
+      },
+    });
+
+    // Habilitar botão de exclusão
+    const deleteBtn = document.getElementById(
+      "delete-item-btn"
+    ) as HTMLButtonElement;
+    deleteBtn.disabled = false;
+    deleteBtn.textContent = `Excluir: ${node.name}`;
+  }
+}
+
+// Função para deselecionar nó
+function deselectNode(): void {
+  if (selectedNodeId) {
+    const node = nodes.get(selectedNodeId) as TreeNode;
+    if (node) {
+      nodes.update({
+        id: selectedNodeId,
+        borderWidth: 3,
+        color: {
+          background: getColorByLevel(node.level || 0),
+          border: "#1f2937",
+        },
+      });
+    }
+  }
+
+  selectedNodeId = null;
+
+  // Desabilitar botão de exclusão
+  const deleteBtn = document.getElementById(
+    "delete-item-btn"
+  ) as HTMLButtonElement;
+  deleteBtn.disabled = true;
+  deleteBtn.textContent = "Excluir Item Selecionado";
+}
+
+// Função para excluir item selecionado
+function deleteSelectedItem(): void {
+  if (!selectedNodeId) {
+    showModal(
+      "Aviso",
+      "Nenhum item selecionado! Clique em um nó da árvore primeiro."
+    );
+    return;
+  }
+
+  const nodeToDelete = nodes.get(selectedNodeId) as TreeNode;
+
+  if (!nodeToDelete) {
+    showModal("Erro", "Nó não encontrado!");
+    return;
+  }
+
+  // Não permitir excluir o nó raiz
+  if (nodeToDelete.category === "root") {
+    showModal("Erro", "Não é possível excluir o nó raiz!");
+    return;
+  }
+
+  // Verificar se o nó tem filhos
+  const hasChildren = edges.get().some((edge) => edge.from === selectedNodeId);
+
+  if (hasChildren) {
+    showModal(
+      "Confirmação",
+      `O item "${nodeToDelete.name}" possui sub-itens. Ao excluí-lo, todos os sub-itens também serão removidos. Deseja continuar?`
+    );
+
+    // Adicionar confirmação temporária (será melhorada depois)
+    setTimeout(() => {
+      if (confirm("Confirma a exclusão?")) {
+        performDeletion(selectedNodeId!);
+      }
+    }, 500);
+  } else {
+    performDeletion(selectedNodeId);
+  }
+}
+
+// Função para realizar a exclusão
+function performDeletion(nodeId: IdType): void {
+  const nodeToDelete = nodes.get(nodeId) as TreeNode;
+
+  if (!nodeToDelete) return;
+
+  // Coletar todos os nós descendentes
+  const nodesToDelete: IdType[] = [];
+  const edgesToDelete: IdType[] = [];
+
+  function collectDescendants(parentId: IdType): void {
+    nodesToDelete.push(parentId);
+
+    // Encontrar todos os filhos
+    const childEdges = edges.get({
+      filter: (edge) => edge.from === parentId,
+    });
+
+    childEdges.forEach((edge) => {
+      edgesToDelete.push(edge.id!);
+      if (edge.to) {
+        collectDescendants(edge.to);
+      }
+    });
+  }
+
+  collectDescendants(nodeId);
+
+  // Remover a aresta que conecta o nó ao seu pai
+  const parentEdge = edges.get({
+    filter: (edge) => edge.to === nodeId,
+  });
+
+  parentEdge.forEach((edge) => {
+    edgesToDelete.push(edge.id!);
+  });
+
+  // Executar a remoção
+  edges.remove(edgesToDelete);
+  nodes.remove(nodesToDelete);
+
+  // Deselecionar
+  selectedNodeId = null;
+  const deleteBtn = document.getElementById(
+    "delete-item-btn"
+  ) as HTMLButtonElement;
+  deleteBtn.disabled = true;
+  deleteBtn.textContent = "Excluir Item Selecionado";
+
+  showModal(
+    "Sucesso",
+    `Item "${nodeToDelete.name}" e seus sub-itens foram excluídos com sucesso!`
+  );
+  console.log(
+    `Item excluído: ${nodeToDelete.name} e ${
+      nodesToDelete.length - 1
+    } sub-itens`
+  );
+}
+
+// Função para criar exemplos padrão
 
 function createDefaultExamples(): void {
   createRootNode();
@@ -577,6 +758,10 @@ function addExampleNode(
 );
 
 (
+  document.getElementById("delete-item-btn") as HTMLButtonElement
+).addEventListener("click", deleteSelectedItem);
+
+(
   document.getElementById("count-combinations-btn") as HTMLButtonElement
 ).addEventListener("click", countAndListCombinations);
 
@@ -619,4 +804,13 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
+// Inicializar com exemplos padrão
 createDefaultExamples();
+
+// Inicializar botão de exclusão como desabilitado
+document.addEventListener("DOMContentLoaded", function () {
+  const deleteBtn = document.getElementById(
+    "delete-item-btn"
+  ) as HTMLButtonElement;
+  deleteBtn.disabled = true;
+});
