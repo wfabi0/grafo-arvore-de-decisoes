@@ -267,94 +267,155 @@ function getColorByLevel(level: number): string {
 
 function contarEListarCombinacoes(): void {
   const allNodes = nos.get() as NoArvore[];
-  const leafNodes = allNodes.filter((node) => {
+
+  const itemsPorCategoria: { [categoria: string]: NoArvore[] } = {};
+
+  allNodes.forEach((node) => {
     const hasChildren = arestas.get().some((edge) => edge.from === node.id);
-    return !hasChildren && node.category !== "root";
+    const isLeaf = !hasChildren && node.category !== "root" && node.name;
+
+    const isActualItem =
+      node.name && !node.name.toLowerCase().includes("opções");
+
+    if (isLeaf && isActualItem) {
+      if (!itemsPorCategoria[node.category!]) {
+        itemsPorCategoria[node.category!] = [];
+      }
+      itemsPorCategoria[node.category!].push(node);
+    }
   });
 
-  if (leafNodes.length === 0) {
-    showModal("Aviso", "Não há caminhos completos na árvore!");
+  const categorias = Object.keys(itemsPorCategoria);
+
+  if (categorias.length === 0) {
+    showModal("Aviso", "Não há itens finais na árvore!");
     return;
   }
 
-  const allPaths: NoArvore[][] = [];
+  const combinacoes: NoArvore[][] = [];
 
-  leafNodes.forEach((leaf) => {
-    const path = obterCaminhoParaRaiz(leaf, allNodes);
-    allPaths.push(path);
-  });
+  function gerarCombinacoes(
+    categoriaIndex: number,
+    combinacaoAtual: NoArvore[]
+  ): void {
+    if (categoriaIndex === categorias.length) {
+      combinacoes.push([...combinacaoAtual]);
+      return;
+    }
 
-  const combinationsText = allPaths
-    .map((path, index) => {
-      const pathDescription = path
-        .reverse()
-        .slice(1)
-        .map((node) => `${node.category}: ${node.name}`)
-        .join(" + ");
-      return `${index + 1}. ${pathDescription}`;
+    const categoria = categorias[categoriaIndex];
+    const itens = itemsPorCategoria[categoria];
+
+    itens.forEach((item) => {
+      combinacaoAtual.push(item);
+      gerarCombinacoes(categoriaIndex + 1, combinacaoAtual);
+      combinacaoAtual.pop();
+    });
+  }
+
+  gerarCombinacoes(0, []);
+
+  if (combinacoes.length === 0) {
+    showModal("Aviso", "Não foi possível gerar combinações completas!");
+    return;
+  }
+
+  const combinationsText = combinacoes
+    .map((combinacao, index) => {
+      const itens = combinacao
+        .map((item) => item.name?.toLowerCase())
+        .join(", ");
+      return `${index + 1}. ${itens}`;
     })
     .join("\n");
 
-  destacarTodosCaminhos(allPaths);
+  destacarTodasAsCombinacoes(combinacoes);
 
   showModal(
     "Todas as Combinações",
-    `Total de combinações possíveis: ${allPaths.length}\n\nTodas as combinações:\n${combinationsText}`
+    `Total de combinações possíveis: ${
+      combinacoes.length
+    }\n\nCategorias disponíveis: ${categorias.join(
+      ", "
+    )}\n\nTodas as combinações:\n${combinationsText}`
   );
 }
 
 function analisarComplexidade(): void {
   const allNodes = nos.get() as NoArvore[];
-  const leafNodes = allNodes.filter((node) => {
+
+  const itemsPorCategoria: { [categoria: string]: NoArvore[] } = {};
+
+  allNodes.forEach((node) => {
     const hasChildren = arestas.get().some((edge) => edge.from === node.id);
-    return !hasChildren && node.category !== "root";
+    const isLeaf = !hasChildren && node.category !== "root" && node.name;
+    const isActualItem =
+      node.name && !node.name.toLowerCase().includes("opções");
+
+    if (isLeaf && isActualItem) {
+      if (!itemsPorCategoria[node.category!]) {
+        itemsPorCategoria[node.category!] = [];
+      }
+      itemsPorCategoria[node.category!].push(node);
+    }
   });
 
-  if (leafNodes.length === 0) {
-    showModal("Aviso", "Não há caminhos completos na árvore!");
+  const categorias = Object.keys(itemsPorCategoria);
+
+  if (categorias.length === 0) {
+    showModal("Aviso", "Não há itens finais na árvore!");
     return;
   }
 
-  let simplestPath: NoArvore[] = [];
-  let complexPath: NoArvore[] = [];
-  let shortestLength = Infinity;
-  let longestLength = 0;
+  const combinacoes: NoArvore[][] = [];
 
-  leafNodes.forEach((leaf) => {
-    const path = obterCaminhoParaRaiz(leaf, allNodes);
-    if (path.length < shortestLength) {
-      shortestLength = path.length;
-      simplestPath = path;
+  function gerarCombinacoes(
+    categoriaIndex: number,
+    combinacaoAtual: NoArvore[]
+  ): void {
+    if (categoriaIndex === categorias.length) {
+      combinacoes.push([...combinacaoAtual]);
+      return;
     }
-    if (path.length > longestLength) {
-      longestLength = path.length;
-      complexPath = path;
-    }
-  });
 
-  destacarCaminhosComplexidade(simplestPath, complexPath);
+    const categoria = categorias[categoriaIndex];
+    const itens = itemsPorCategoria[categoria];
 
-  const simplestDescription = simplestPath
-    .reverse()
-    .slice(1)
-    .map((node) => `${node.category}: ${node.name}`)
-    .join(" + ");
+    itens.forEach((item) => {
+      combinacaoAtual.push(item);
+      gerarCombinacoes(categoriaIndex + 1, combinacaoAtual);
+      combinacaoAtual.pop();
+    });
+  }
 
-  const complexDescription = complexPath
-    .reverse()
-    .slice(1)
-    .map((node) => `${node.category}: ${node.name}`)
-    .join(" + ");
+  gerarCombinacoes(0, []);
+
+  if (combinacoes.length === 0) {
+    showModal("Aviso", "Não foi possível gerar combinações completas!");
+    return;
+  }
+
+  const simplestCombination = combinacoes[0];
+  const complexCombination = combinacoes[Math.floor(combinacoes.length / 2)];
+
+  destacarCaminhosComplexidade(simplestCombination, complexCombination);
+
+  const simplestDescription = simplestCombination
+    .map((node) => node.name?.toLowerCase())
+    .join(", ");
+
+  const complexDescription = complexCombination
+    .map((node) => node.name?.toLowerCase())
+    .join(", ");
 
   showModal(
-    "Análise de Complexidade",
-    `🟢 LOOK MAIS SIMPLES (${
-      shortestLength - 1
-    } escolhas):\n${simplestDescription}\n\n` +
-      `🔴 LOOK MAIS COMPLEXO (${
-        longestLength - 1
-      } escolhas):\n${complexDescription}\n\n` +
-      `Diferença: ${longestLength - shortestLength} escolhas adicionais`
+    "Análise de Combinações",
+    `� TOTAL DE COMBINAÇÕES: ${combinacoes.length}\n\n` +
+      `🟢 EXEMPLO 1:\n${simplestDescription}\n\n` +
+      `🔴 EXEMPLO 2:\n${complexDescription}\n\n` +
+      `Cada combinação usa exatamente ${
+        categorias.length
+      } itens (um de cada categoria: ${categorias.join(", ")})`
   );
 }
 
@@ -376,6 +437,26 @@ function obterCaminhoParaRaiz(
   }
 
   return path;
+}
+
+function destacarTodasAsCombinacoes(combinacoes: NoArvore[][]): void {
+  redefinirDestaque();
+
+  const colors = ["#ff6b6b", "#34d399", "#fbbf24", "#a78bfa", "#fb7185"];
+
+  combinacoes.forEach((combinacao, index) => {
+    const color = colors[index % colors.length];
+
+    combinacao.forEach((node) => {
+      nos.update({
+        id: node.id,
+        color: {
+          background: color,
+          border: "#1f2937",
+        },
+      });
+    });
+  });
 }
 
 function destacarTodosCaminhos(paths: NoArvore[][]): void {
@@ -401,12 +482,12 @@ function destacarTodosCaminhos(paths: NoArvore[][]): void {
 }
 
 function destacarCaminhosComplexidade(
-  simplestPath: NoArvore[],
-  complexPath: NoArvore[]
+  simplestCombination: NoArvore[],
+  complexCombination: NoArvore[]
 ): void {
   redefinirDestaque();
 
-  simplestPath.forEach((node) => {
+  simplestCombination.forEach((node) => {
     nos.update({
       id: node.id,
       color: {
@@ -416,7 +497,7 @@ function destacarCaminhosComplexidade(
     });
   });
 
-  complexPath.forEach((node) => {
+  complexCombination.forEach((node) => {
     nos.update({
       id: node.id,
       color: {
@@ -425,9 +506,6 @@ function destacarCaminhosComplexidade(
       },
     });
   });
-
-  destacarArestasParaCaminho(simplestPath, "#10b981");
-  destacarArestasParaCaminho(complexPath, "#ef4444");
 }
 
 function redefinirDestaque(): void {
