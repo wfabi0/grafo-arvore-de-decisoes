@@ -341,84 +341,6 @@ function contarEListarCombinacoes(): void {
   );
 }
 
-function analisarComplexidade(): void {
-  const allNodes = nos.get() as NoArvore[];
-
-  const itemsPorCategoria: { [categoria: string]: NoArvore[] } = {};
-
-  allNodes.forEach((node) => {
-    const hasChildren = arestas.get().some((edge) => edge.from === node.id);
-    const isLeaf = !hasChildren && node.category !== "root" && node.name;
-    const isActualItem =
-      node.name && !node.name.toLowerCase().includes("opções");
-
-    if (isLeaf && isActualItem) {
-      if (!itemsPorCategoria[node.category!]) {
-        itemsPorCategoria[node.category!] = [];
-      }
-      itemsPorCategoria[node.category!].push(node);
-    }
-  });
-
-  const categorias = Object.keys(itemsPorCategoria);
-
-  if (categorias.length === 0) {
-    showModal("Aviso", "Não há itens finais na árvore!");
-    return;
-  }
-
-  const combinacoes: NoArvore[][] = [];
-
-  function gerarCombinacoes(
-    categoriaIndex: number,
-    combinacaoAtual: NoArvore[]
-  ): void {
-    if (categoriaIndex === categorias.length) {
-      combinacoes.push([...combinacaoAtual]);
-      return;
-    }
-
-    const categoria = categorias[categoriaIndex];
-    const itens = itemsPorCategoria[categoria];
-
-    itens.forEach((item) => {
-      combinacaoAtual.push(item);
-      gerarCombinacoes(categoriaIndex + 1, combinacaoAtual);
-      combinacaoAtual.pop();
-    });
-  }
-
-  gerarCombinacoes(0, []);
-
-  if (combinacoes.length === 0) {
-    showModal("Aviso", "Não foi possível gerar combinações completas!");
-    return;
-  }
-
-  const simplestCombination = combinacoes[0];
-  const complexCombination = combinacoes[Math.floor(combinacoes.length / 2)];
-
-  destacarCaminhosComplexidade(simplestCombination, complexCombination);
-
-  const simplestDescription = simplestCombination
-    .map((node) => node.name?.toLowerCase())
-    .join(", ");
-
-  const complexDescription = complexCombination
-    .map((node) => node.name?.toLowerCase())
-    .join(", ");
-
-  showModal(
-    "Análise de Combinações",
-    `� TOTAL DE COMBINAÇÕES: ${combinacoes.length}\n\n` +
-      `🟢 EXEMPLO 1:\n${simplestDescription}\n\n` +
-      `🔴 EXEMPLO 2:\n${complexDescription}\n\n` +
-      `Cada combinação usa exatamente ${
-        categorias.length
-      } itens (um de cada categoria: ${categorias.join(", ")})`
-  );
-}
-
 function destacarTodasAsCombinacoes(combinacoes: NoArvore[][]): void {
   redefinirDestaque();
 
@@ -435,33 +357,6 @@ function destacarTodasAsCombinacoes(combinacoes: NoArvore[][]): void {
           border: "#1f2937",
         },
       });
-    });
-  });
-}
-
-function destacarCaminhosComplexidade(
-  simplestCombination: NoArvore[],
-  complexCombination: NoArvore[]
-): void {
-  redefinirDestaque();
-
-  simplestCombination.forEach((node) => {
-    nos.update({
-      id: node.id,
-      color: {
-        background: "#10b981",
-        border: "#065f46",
-      },
-    });
-  });
-
-  complexCombination.forEach((node) => {
-    nos.update({
-      id: node.id,
-      color: {
-        background: "#ef4444",
-        border: "#991b1b",
-      },
     });
   });
 }
@@ -738,10 +633,6 @@ function adicionarNoExemplo(
 (
   document.getElementById("count-combinations-btn") as HTMLButtonElement
 ).addEventListener("click", contarEListarCombinacoes);
-
-(
-  document.getElementById("analyze-complexity-btn") as HTMLButtonElement
-).addEventListener("click", analisarComplexidade);
 
 (document.getElementById("reset-btn") as HTMLButtonElement).addEventListener(
   "click",
