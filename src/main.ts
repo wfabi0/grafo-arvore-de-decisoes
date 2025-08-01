@@ -419,26 +419,6 @@ function analisarComplexidade(): void {
   );
 }
 
-function obterCaminhoParaRaiz(
-  node: NoArvore,
-  allNodes: NoArvore[]
-): NoArvore[] {
-  const path: NoArvore[] = [node];
-  let currentNode = node;
-
-  while (currentNode.parentId) {
-    const parent = allNodes.find((n) => n.id === currentNode.parentId);
-    if (parent) {
-      path.push(parent);
-      currentNode = parent;
-    } else {
-      break;
-    }
-  }
-
-  return path;
-}
-
 function destacarTodasAsCombinacoes(combinacoes: NoArvore[][]): void {
   redefinirDestaque();
 
@@ -456,28 +436,6 @@ function destacarTodasAsCombinacoes(combinacoes: NoArvore[][]): void {
         },
       });
     });
-  });
-}
-
-function destacarTodosCaminhos(paths: NoArvore[][]): void {
-  redefinirDestaque();
-
-  const colors = ["#ff6b6b", "#34d399", "#fbbf24", "#a78bfa", "#fb7185"];
-
-  paths.forEach((path, index) => {
-    const color = colors[index % colors.length];
-
-    path.forEach((node) => {
-      nos.update({
-        id: node.id,
-        color: {
-          background: color,
-          border: "#1f2937",
-        },
-      });
-    });
-
-    destacarArestasParaCaminho(path, color);
   });
 }
 
@@ -530,31 +488,6 @@ function redefinirDestaque(): void {
       },
     });
   });
-}
-
-function destacarArestasParaCaminho(
-  path: NoArvore[],
-  color: string = "#ff6b6b"
-): void {
-  const allEdges = arestas.get();
-
-  for (let i = 0; i < path.length - 1; i++) {
-    const fromNode = path[i + 1]; // Pai
-    const toNode = path[i]; // Filho
-
-    const edge = allEdges.find(
-      (e) => e.from === fromNode.id && e.to === toNode.id
-    );
-    if (edge) {
-      arestas.update({
-        id: edge.id,
-        color: {
-          color: color,
-          highlight: color,
-        },
-      });
-    }
-  }
 }
 
 function redefinirGrafo(): void {
